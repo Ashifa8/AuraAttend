@@ -1,0 +1,96 @@
+.container {
+    display: flex;
+    height: 100vh;
+    background-color: rgba(255, 255, 255, 0.8); /* Adds a white overlay for better readability */
+    backdrop-filter: blur(5px); /* Optional: Adds a blur effect to the background */
+}
+
+.camera-section {
+    flex: 3; /* Takes up three-fourths of the screen */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-right: 1px solid #ddd;
+    padding: 20px;
+    background-image: url('back.jpeg');
+    background-repeat: no-repeat; /* Ensures the background image does not repeat */
+    background-size: cover; /* Adjusts the image size to cover the entire section */
+    background-position: center; /* Centers the image within the section */
+}
+
+.camera-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: transform 0.2s ease-in-out;
+}
+
+.camera-button:hover {
+    transform: scale(1.1); /* Slight zoom effect on hover for better user interaction */
+}
+
+.icon {
+    width: 60px;
+    height: 60px;
+}
+
+h4 {
+    margin: 0;
+    font-size: 16px;
+    color: #555;
+}
+
+.camera-feed {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 600px;
+    margin-top: 20px;
+}
+
+#video {
+    width: 100%;
+    max-height: 400px;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    object-fit: cover; /* Ensures the video fits nicely within its container */
+}
+
+#captureButton {
+    margin-top: 10px;
+    padding: 8px 20px;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+#captureButton:hover {
+    background-color: #45a049; /* Darker shade for the hover effect */
+}
+
+.attendance-section {
+    flex: 1; /* Takes up one-fourth of the screen */
+    padding: 20px;
+    background-color: rgba(255, 255, 255, 0.379);
+    border-radius: 10px;
+    background-image: url('face-recognition-attendance-system.jpg');
+    background-size: cover;
+    background-position: center;
+}
+
+.attendance-frame {
+    width: 100%;
+    height: calc(100% - 40px);
+    border: none;
+    background-color: #f4f3f6c3;
+    border-radius: 10px;
+}
