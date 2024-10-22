@@ -3,7 +3,7 @@ import cv2  # OpenCV for image processing
 import numpy as np
 
 # Define the path to the folder containing images
-image_folder = 'C:\Users\qc\Desktop\New folder (3)\AuraAttend\image'  # Use raw string
+image_folder = r'C:\Users\qc\Desktop\New folder (3)\AuraAttend\image'  # Use raw string
 
 # List to store all image data as numpy arrays
 image_data_list = []
