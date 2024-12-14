@@ -35,8 +35,6 @@ def load_and_process_images(main_folder_path, output_base_folder, required_size=
                 # Read the image using OpenCV
                 image = cv2.imread(file_path)
                 if image is not None:
-                    # Print the shape of the loaded image
-                    print(f"Loaded {filename} with shape: {image.shape}")
                     # Convert the image to grayscale for face detection
                     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
                     # Resize image for mean/median calculation
@@ -57,7 +55,6 @@ def load_and_process_images(main_folder_path, output_base_folder, required_size=
                             person_output_folder, f"{os.path.splitext(filename)[0]}_face_{i}.jpg"
                         )
                         cv2.imwrite(output_file_path, face_resized)
-                        print(f"Saved face {i} from {filename} to {output_file_path}")
 
 # Function to calculate mean and median of images
 def calculate_mean_median(images):
