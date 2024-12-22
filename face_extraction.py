@@ -1,82 +1,76 @@
 import os
-import cv2  # OpenCV for image processing
+import cv2
 import numpy as np
+from facenet_pytorch import MTCNN, InceptionResnetV1
+import torch
 
-# List to store all image data as numpy arrays
 image_data_list = []
+mtcnn = MTCNN(keep_all=True)
+feature_extractor = InceptionResnetV1(pretrained='vggface2').eval()
 
-# Path to the Haar Cascade for face detection
-cascade_path = cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
-face_cascade = cv2.CascadeClassifier(cascade_path)
-
-# Function to create a directory if it doesn't exist
 def create_dir(path):
     if not os.path.exists(path):
         os.makedirs(path)
 
-# Function to load and process images, saving extracted faces in person-specific folders
-def load_and_process_images(main_folder_path, output_base_folder, required_size=(256, 256), face_output_size=(160, 160)):
-    # Iterate through each subfolder in the main folder
+def gamma_correction(image, gamma=1.5):
+    inv_gamma = 1.0 / gamma
+    table = np.array([((i / 255.0) ** inv_gamma) * 255 for i in np.arange(0, 256)]).astype("uint8")
+    return cv2.LUT(image, table)
+
+def histogram_equalization(image):
+    image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    return cv2.equalizeHist(image_gray)
+
+def load_and_process_images(main_folder_path, output_base_folder, required_size=(256, 256), face_output_size=(160, 160), prob_threshold=0.9):
     for root, dirs, files in os.walk(main_folder_path):
-        # Skip the root folder itself
         if root == main_folder_path:
             continue
         
-        # Get the name of the person (subfolder name)
         person_name = os.path.basename(root)
-        # Create a corresponding output folder for the person
         person_output_folder = os.path.join(output_base_folder, person_name)
         create_dir(person_output_folder)
 
         for filename in files:
             file_path = os.path.join(root, filename)
-            # Check if the file is an image based on its extension
             if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.bmp', '.tif', '.tiff')):
-                # Read the image using OpenCV
                 image = cv2.imread(file_path)
                 if image is not None:
-                    # Convert the image to grayscale for face detection
-                    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-                    # Resize image for mean/median calculation
-                    resized_image = cv2.resize(gray_image, required_size)
-                    # Append resized image data to the list
-                    image_data_list.append(resized_image)
+                    image_corrected = gamma_correction(image)
+                    image_equalized = histogram_equalization(image_corrected)
+                    img_rgb = cv2.cvtColor(image_equalized, cv2.COLOR_BGR2RGB)
+                    faces, probs = mtcnn.detect(img_rgb)
 
-                    # Perform face detection and extraction
-                    faces = face_cascade.detectMultiScale(
-                        gray_image, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30)
-                    )
-                    for i, (x, y, w, h) in enumerate(faces):
-                        # Extract and resize the detected face
-                        face = image[y:y+h, x:x+w]
-                        face_resized = cv2.resize(face, face_output_size)
-                        # Save the extracted face in the person's folder
-                        output_file_path = os.path.join(
-                            person_output_folder, f"{os.path.splitext(filename)[0]}_face_{i}.jpg"
-                        )
-                        cv2.imwrite(output_file_path, face_resized)
+                    if faces is not None:
+                        for i, (x1, y1, x2, y2) in enumerate(faces):
+                            if probs[i] < prob_threshold:
+                                continue
 
-# Function to calculate mean and median of images
+                            face = image[int(y1):int(y2), int(x1):int(x2)]
+                            if face.size == 0:
+                                continue
+
+                            face_resized = cv2.resize(face, face_output_size)
+                            output_file_path = os.path.join(
+                                person_output_folder, f"{os.path.splitext(filename)[0]}_face_{i}.jpg"
+                            )
+                            cv2.imwrite(output_file_path, face_resized)
+                            face_gray = cv2.cvtColor(face_resized, cv2.COLOR_BGR2GRAY)
+                            image_data_list.append(face_gray)
+
 def calculate_mean_median(images):
-    # Stack all images into one 3D array (assuming all images have the same dimensions)
     image_stack = np.array(images)
-    # Calculate the mean and median across the image stack
     mean_image = np.mean(image_stack, axis=0)
     median_image = np.median(image_stack, axis=0)
     return mean_image, median_image
 
-# Main execution
-main_folder_path = r'C:\Users\ashifa ikram\Downloads\pictures'  # Replace with the correct path to your main folder
-output_base_folder = r'C:\Users\ashifa ikram\Downloads\extracted_faces'  # Base folder for all extracted faces
+main_folder_path = r'C:\Users\ashifa ikram\Downloads\pictures'
+output_base_folder = r'C:\Users\ashifa ikram\Downloads\extracted_faces'
 create_dir(output_base_folder)
-
-# Load and process images
 load_and_process_images(main_folder_path, output_base_folder)
 
 if len(image_data_list) > 0:
-    # Calculate mean and median for all resized images
     mean_image, median_image = calculate_mean_median(image_data_list)
     print("Mean pixel values calculated for all images.")
     print("Median pixel values calculated for all images.")
 else:
-    print("No images found in the folder.")
+    print("No faces found in the folder.")
