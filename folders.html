@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Folders</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: url('hey.jpg') no-repeat center center fixed;
+      background-size: cover;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.25);
+      width: 70%;
+      text-align: center;
+    }
+
+    h2 {
+      color: white;
+      margin-bottom: 25px;
+      font-size: 24px;
+    }
+
+    .folder-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .folder {
+      position: relative;
+      width: 120px;
+      height: 140px;
+      background-color: #0fafdb;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-weight: bold;
+      transition: transform 0.2s ease-in-out;
+      cursor: pointer;
+    }
+
+    .folder:hover {
+      transform: scale(1.05);
+    }
+
+    .folder i {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+
+    .folder-name {
+      font-size: 14px;
+    }
+
+    .add-folder {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      display: none;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      z-index: 1000;
+    }
+
+    .popup input {
+      padding: 8px;
+      width: 80%;
+      margin-bottom: 10px;
+    }
+
+    .popup button {
+      padding: 8px 14px;
+      margin: 5px;
+      border: none;
+      background-color: #0fafdb;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .delete-icon {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      font-size: 10px;
+      color: white;
+      background-color: rgba(0, 0, 0, 0.3);
+      border-radius: 50%;
+      padding: 4px;
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+      opacity: 0;
+      transition: opacity 0.2s ease, background-color 0.2s ease;
+      cursor: pointer;
+    }
+
+    .folder:hover .delete-icon {
+      opacity: 1;
+    }
+
+    .delete-icon:hover {
+      background-color: rgba(255, 0, 0, 0.8);
+    }
+
+    /* Modal Style for Opening Folder */
+    .folder-modal {
+      position: fixed;
+      top: 10%;
+      left: 10%;
+      width: 80%;
+      height: 80%;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+      display: none;
+      z-index: 2000;
+      padding: 20px;
+      overflow: auto;
+      border: 5px solid darkblue; /* Dark blue border */
+    }
+
+    .folder-modal h3 {
+      text-align: center;
+    }
+
+    .folder-modal .import-btn {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #0e6780;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .file-input {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #f2f2f2;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 20px;
+      background-color: transparent;
+      border: none;
+      cursor: pointer;
+      color: #0fafdb;
+    }
+    /* Style for the file list items */
+.file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f8f9fa;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.file-item a {
+  text-decoration: none;
+  color: #333;
+  font-weight: bold;
+  flex: 1;
+}
+
+.delete-file-btn {
+  background-color: #f44336;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-size: 14px;
+}
+
+.delete-file-btn:hover {
+  background-color: #d32f2f;
+}
+
+/* Add a transition to file items for smooth hover effect */
+.file-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+.file-count {
+    display: inline-block;
+    background-color: #007bff; /* Blue background */
+    color: white;
+    padding: 2px 8px;
+    font-size: 0.9em;
+    border-radius: 12px; /* Round corners */
+    margin-left: -1px 2px; /* Space between text and count */
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Subtle shadow for 3D effect */
+    transition: all 0.3s ease;
+  }
+  
+  .file-count:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+    transform: scale(1.1); /* Slightly enlarge on hover */
+  }
+
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Create and Manage Folders</h2>
+    <div class="folder-container" id="folderContainer">
+      <!-- Folders will be inserted here -->
+    </div>
+    <button id="createFolderBtn" onclick="openFolderPopup()"></button>
+  </div>
+
+  <!-- Folder Creation Popup -->
+  <div class="popup" id="folderPopup">
+    <h3>Enter Folder Name</h3>
+    <input type="text" id="folderName" placeholder="Folder Name" />
+    <br />
+    <button onclick="createFolder()">Create</button>
+    <button onclick="closePopup()">Cancel</button>
+  </div>
+
+  <!-- Folder Modal for Viewing Files -->
+  <div class="folder-modal" id="folderModal">
+    <button class="close-btn" onclick="closeFolder()">X</button>
+    <h3>Folder: <span id="folderNameDisplay"></span></h3>
+    <button class="import-btn" onclick="importFiles()">Import Files from PC</button>
+    <input type="file" class="file-input" id="fileInput" multiple />
+    <button class="import-btn" onclick="uploadFiles()">Upload Files</button>
+    <div id="fileListContainer" class="file-list-section">
+      <h4>Files in this Folder 
+        <span id="file-count" class="file-count">(0)</span>:
+      </h4>
+      <ul id="fileList">
+        <!-- Dynamically generated list of files with delete button -->
+      </ul>
+    </div>
+  </div>
+</body>
+<script>
+    // Open folder creation popup
+    function showPopup() {
+        document.getElementById("folderPopup").style.display = "block";
+    }
+  
+    // Close folder creation popup
+    function closePopup() {
+        document.getElementById("folderPopup").style.display = "none";
+        document.getElementById("folderName").value = "";
+    }
+  
+    // Create new folder
+    function createFolder() {
+        const folderName = document.getElementById("folderName").value.trim();
+        if (folderName === "") {
+            alert("Please enter a folder name.");
+            return;
+        }
+  
+        fetch('http://127.0.0.1:5000/create_folder', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ folder_name: folderName })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                loadFolders(); // Refresh folders
+            } else {
+                alert("Error: " + data.error);
+            }
+        })
+        .catch(error => {
+            console.error("Error creating folder:", error); // Debugging log
+            alert("Error: " + error.message);
+        });
+  
+        closePopup();
+    }
+  
+    // Display folders on the page
+    function displayFolders(folders) {
+        const folderContainer = document.getElementById("folderContainer");
+        folderContainer.innerHTML = ''; // Clear the container
+  
+        // Add Folder Button — always visible
+        const addBtn = document.createElement("div");
+        addBtn.classList.add("folder", "add-folder");
+  
+        const plusIcon = document.createElement("i");
+        plusIcon.classList.add("fas", "fa-plus");
+  
+        const plusText = document.createElement("div");
+        plusText.classList.add("folder-name");
+        plusText.textContent = "Add Folder";
+  
+        addBtn.appendChild(plusIcon);
+        addBtn.appendChild(plusText);
+        addBtn.onclick = showPopup;
+  
+        folderContainer.appendChild(addBtn); // Always add this
+  
+        // If no folders are found, do nothing additional
+        if (folders.length === 0) {
+            return;
+        }
+  
+        // If folders exist, display them
+        folders.forEach(folder => {
+            const folderName = folder[0];
+  
+            const folderDiv = document.createElement("div");
+            folderDiv.classList.add("folder");
+  
+            const deleteBtn = document.createElement("i");
+            deleteBtn.classList.add("fas", "fa-times", "delete-icon");
+            deleteBtn.title = "Delete Folder";
+            deleteBtn.onclick = (e) => {
+                e.stopPropagation();
+                deleteFolder(folderName);
+            };
+  
+            const icon = document.createElement("i");
+            icon.classList.add("fas", "fa-folder");
+  
+            const name = document.createElement("div");
+            name.classList.add("folder-name");
+            name.textContent = folderName;
+  
+            folderDiv.appendChild(deleteBtn);
+            folderDiv.appendChild(icon);
+            folderDiv.appendChild(name);
+  
+            // Open folder on click
+            folderDiv.onclick = function() {
+                openFolder(folderName);
+            };
+  
+            folderContainer.appendChild(folderDiv);
+        });
+    }
+  
+    // Delete a folder
+    function deleteFolder(folderName) {
+        if (!confirm(`Are you sure you want to delete the folder "${folderName}"?`)) return;
+  
+        fetch("http://127.0.0.1:5000/delete_folder", {
+            method: "POST",
+            credentials: 'include',
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ folder_name: folderName })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("Folder deleted successfully.");
+                loadFolders(); // refresh the folders list
+            } else {
+                alert("Error: " + data.error);
+            }
+        })
+        .catch(error => {
+            console.error("Error deleting folder:", error);
+            alert("Error deleting folder.");
+        });
+    }
+  
+    // Open the folder and show files
+    function openFolder(folderName) {
+        document.getElementById("folderModal").style.display = "block";
+        document.getElementById("folderNameDisplay").textContent = folderName;
+  
+        loadFiles(folderName); // Load files for this folder
+    }
+  
+    // Close the folder modal
+    function closeFolder() {
+        document.getElementById("folderModal").style.display = "none";
+    }
+  
+    // Import files into the folder
+    function importFiles() {
+        document.getElementById("fileInput").click();
+    }
+  
+   // Upload selected files
+  function uploadFiles() {
+      const folderName = document.getElementById("folderNameDisplay").textContent;
+      const files = document.getElementById("fileInput").files;
+  
+      if (files.length === 0) {
+          alert("Please select files to upload.");
+          return;
+      }
+  
+      const formData = new FormData();
+      Array.from(files).forEach(file => {
+          formData.append("files", file);
+      });
+  
+      formData.append("folder_name", folderName);
+  
+      fetch("http://127.0.0.1:5000/upload_files", {
+          method: "POST",
+          body: formData,
+          credentials: 'include',
+      })
+      .then(response => response.json())
+      .then(data => {
+          if (data.success) {
+              alert("Files uploaded successfully!");
+              closeFolder();
+              
+              // Delay file loading to ensure server processes files before showing them
+              setTimeout(() => {
+                  loadFiles(folderName);  // Reload files for this folder after delay
+              }, 500); // 500ms delay
+          } else {
+              alert("Error: " + data.error);
+          }
+      })
+      .catch(error => {
+          console.error("Error uploading files:", error);
+          alert("Error uploading files.");
+      });
+  }
+  // Delete a file from the folder
+  function deleteFile(fileId, folderName) {
+      console.log("Deleting file with ID: ", fileId);  // Log the fileId before sending
+      
+      if (!confirm(`Are you sure you want to delete the file?`)) return;
+  
+      const formData = new FormData();
+      formData.append('file_id', fileId);  // Append file_id as form data
+  
+      fetch("http://127.0.0.1:5000/delete_file", {
+          method: "POST",
+          credentials: 'include',
+          body: formData  // Send as FormData
+      })
+      .then(response => response.json())
+      .then(data => {
+          console.log("Server Response:", data);  // Log the server response
+          if (data.success) {
+              alert("File deleted successfully.");
+              loadFiles(folderName);  // Refresh the file list
+          } else {
+              alert("Error: " + data.error);
+          }
+      })
+      .catch(error => {
+          console.error("Error deleting file:", error);
+          alert("Error deleting file.");
+      });
+  }
+  
+  
+  // Load files for a folder
+  function loadFiles(folderName) {
+      fetch(`http://127.0.0.1:5000/get_files/${folderName}`, {
+          method: 'GET',
+          credentials: 'include',
+      })
+      .then(response => response.json())
+      .then(data => {
+          const fileList = document.getElementById("fileList");
+          fileList.innerHTML = "";  // Clear previous files
+  
+          const fileCountDisplay = document.getElementById("file-count");
+  
+          if (data.success && data.files.length > 0) {
+              data.files.forEach(file => {
+                  const listItem = document.createElement("li");
+                  listItem.classList.add("file-item");
+  
+                  const fileLink = document.createElement("a");
+                  fileLink.href = file.file_path;
+                  fileLink.textContent = file.file_name;
+                  fileLink.target = "_blank";
+                  fileLink.id = "file-name-" + file.id;
+  
+                  // Create delete button
+                  const deleteBtn = document.createElement("button");
+                  deleteBtn.classList.add("delete-file-btn");
+                  deleteBtn.textContent = "Delete";
+  
+                  deleteBtn.onclick = () => deleteFile(file.id, folderName);
+  
+                  listItem.appendChild(fileLink);
+                  listItem.appendChild(deleteBtn);
+                  fileList.appendChild(listItem);
+              });
+  
+              // Update file count
+              fileCountDisplay.textContent = `(${data.files.length})`;
+          } else {
+              const listItem = document.createElement("li");
+              listItem.textContent = "No files uploaded yet.";
+              fileList.appendChild(listItem);
+  
+              // Update file count to 0
+              fileCountDisplay.textContent = "(0)";
+          }
+      })
+      .catch(error => {
+          console.error("Error fetching files:", error);
+          alert("Error fetching files for this folder.");
+      });
+  }
+  
+    // Load folders when the page loads
+    function loadFolders() {
+        fetch('http://127.0.0.1:5000/get_folders', {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayFolders(data.folders);
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => {
+            console.error("Error fetching folders:", error);
+            alert("Error fetching folders: " + error.message);
+        });
+    }
+  
+    // Load folders when the page is loaded
+    window.onload = loadFolders;
+  </script>
+  
+    
+    
+  </body>
+  </html>
+  
