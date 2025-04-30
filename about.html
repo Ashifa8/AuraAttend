@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us</title>
+    <link rel="stylesheet" href="about.css">
+</head>
+<body>
+
+    <div class="container">
+        <h1>About Us</h1>
+        <p class="sub-heading">This is a Smart Attendance Tracking System</p>
+
+        <div class="content">
+            <!-- Left Section (Review Form) -->
+            <div class="left-section">
+                <h2>Share Your Experience</h2>
+                <form id="review-form">
+                    <div class="form-group">
+                        <label for="user-name">Your Name:</label>
+                        <input type="text" id="user-name" name="user_name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="thoughts">Your Thoughts:</label>
+                        <textarea id="thoughts" name="thoughts" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Rating:</label>
+                        <div class="star-rating">
+                            <input type="radio" name="rating" value="5" id="star5"><label for="star5">★</label>
+                            <input type="radio" name="rating" value="4" id="star4"><label for="star4">★</label>
+                            <input type="radio" name="rating" value="3" id="star3"><label for="star3">★</label>
+                            <input type="radio" name="rating" value="2" id="star2"><label for="star2">★</label>
+                            <input type="radio" name="rating" value="1" id="star1" required><label for="star1">★</label>
+                        </div>
+                    </div>
+
+                    <button type="submit">Submit Review</button>
+                </form>
+            </div>
+
+            <!-- Right Section (Website Info) -->
+            <div class="right-section">
+                <h2>Our Website</h2>
+                <p>
+                    Our Face Recognition Attendance System is designed to revolutionize 
+                    classroom attendance management for teachers. No more manual roll calls or proxy attendance—our smart 
+                    system automatically marks attendance in Excel sheets by recognizing student faces, ensuring accuracy and saving valuable time.
+                </p>
+                <p>
+                    For students, we provide a dedicated portal where they can access their attendance records and share feedback 
+                    with teachers, fostering a transparent and efficient attendance process. This system offers real-time attendance tracking, allowing both students and teachers to manage and monitor their attendance records effectively. It’s simple to use and saves time, making the learning environment more efficient and focused.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="about.js"></script>
+
+</body>
+</html>

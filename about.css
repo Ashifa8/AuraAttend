@@ -1,0 +1,156 @@
+/* General Styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: url('peechy.jpg') no-repeat center center fixed; /* Background image */
+    background-size: cover; /* Make sure the background image covers the whole screen */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    height: 100vh; /* Full height viewport */
+}
+
+/* Main Container */
+.container {
+    width: 90%;
+    max-width: 1000px;
+    background: rgba(255, 255, 255, 0.7); /* Transparent container */
+    padding: 30px;
+    margin: 40px auto;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+/* Headings */
+h1 {
+    text-align: center;
+    font-size: 32px;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.sub-heading {
+    text-align: center;
+    font-size: 18px;
+    color: #555;
+    margin-bottom: 30px;
+}
+
+/* Two-Column Layout */
+.content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;  /* Ensures both sections align at the top */
+    gap: 20px;
+    flex-wrap: nowrap; /* Prevents the right section from moving below */
+}
+
+/* Left Section - Review Form */
+.left-section {
+    width: 48%;
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Right Section - Website Info */
+.right-section {
+    width: 48%;
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Text adjustments for equal visual balance */
+.right-section p {
+    font-size: 16px;  /* Increase font size for better readability */
+    line-height: 1.6; /* Adjust line spacing for a comfortable read */
+    margin-bottom: 15px;
+}
+
+.right-section h2 {
+    font-size: 24px;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+/* Form Styling */
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+input, textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+textarea {
+    resize: vertical;
+    height: 100px;
+}
+
+/* Star Rating */
+.star-rating {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: start;
+    gap: 5px;
+}
+
+.star-rating input {
+    display: none;
+}
+
+.star-rating label {
+    font-size: 30px;
+    color: gray;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.star-rating input:checked ~ label,
+.star-rating label:hover,
+.star-rating label:hover ~ label {
+    color: gold;
+}
+
+/* Submit Button */
+button {
+    background: #28a745;
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    width: 100%;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background: #218838;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .content {
+        flex-direction: column;
+    }
+
+    .left-section, .right-section {
+        width: 100%;
+    }
+}

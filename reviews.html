@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: url('{{ url_for('static', filename='peechy.jpg') }}') no-repeat center center fixed;
+            background-size: cover;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* Transparent container for reviews */
+        .reviews-container {
+            background: rgba(255, 255, 255, 0.8); /* Transparent effect */
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.3);
+            width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* Reviews header */
+        .reviews-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 5px; /* Reduced padding to bring heading and stars closer */
+            border-bottom: 2px solid rgba(29, 9, 245, 0.5);
+            margin-bottom: 10px; /* Reduced margin to bring reviews header closer to content */
+            margin-top: -80px;
+        }
+
+        /* Review card */
+        .review-card {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            text-align: left;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Username styling */
+        .user-name {
+            font-size: 18px;
+            font-weight: bold;
+            display: block;
+            color: #333;
+        }
+
+        /* Star ratings */
+        .stars {
+            color: gold;
+            font-size: 25px;
+            margin: 0px 0px;
+            margin-top: -10px; /* Reduced top margin to align stars closer to the heading */
+        }
+
+        /* Thoughts text */
+        .thoughts {
+            font-size: 14px;
+            color: #555;
+        }
+
+        /* Timestamp */
+        .timestamp {
+            font-size: 12px;
+            color: #777;
+        }
+
+        /* Styling for the total reviews counter */
+        .reviews-count {
+            font-size: 16px;
+            color: #333;
+            margin-top: 90px; /* Removed margin to bring count closer to header */
+        }
+
+        /* Position for the Reviews heading and average rating stars */
+        .reviews-header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0px; /* Reduced margin for better alignment */
+        }
+
+        /* Average rating stars */
+        .average-rating {
+            font-size: 30px;
+            color: gold;
+            margin-top: -25px; /* Remove any top margin */
+        }
+
+        /* Numeric average rating */
+        .numeric-rating {
+            font-size: 13px;
+            color: #333;
+            margin-top: 0px; /* Position just below the stars */
+        }
+    </style>
+</head>
+
+<body>
+    <div class="reviews-container">
+        <div class="reviews-header-container">
+            <div>
+                <h1>Reviews</h1>
+                <div class="average-rating" id="averageRating"></div> <!-- Display average rating stars here -->
+                <div class="numeric-rating" id="numericRating"></div> <!-- Display average rating in numeric form here -->
+            </div>
+            <span id="reviewsCount" class="reviews-count"></span> <!-- Total reviews count -->
+        </div>
+        <div class="reviews-header">
+            <span id="reviewsCount" class="reviews-count"></span>
+        </div>
+        <div id="reviewContainer"></div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            fetchReviews(); // Call function when the page loads
+        });
+
+        function fetchReviews() {
+            fetch("http://127.0.0.1:5000/get_reviews")
+                .then(response => response.json()) 
+                .then(data => {
+                    if (data.reviews) {
+                        displayReviews(data.reviews);
+                        updateReviewCount(data.reviews.length); // Update the review count
+                        displayAverageRating(data.reviews); // Display the average rating
+                    } else {
+                        console.error("No reviews found!");
+                    }
+                })
+                .catch(error => console.error("Error fetching reviews:", error));
+        }
+
+        function displayReviews(reviews) {
+            let reviewContainer = document.getElementById("reviewContainer");
+            reviewContainer.innerHTML = ""; // Clear existing content
+
+            if (reviews.length === 0) {
+                reviewContainer.innerHTML = "<p>No reviews available.</p>";
+                return;
+            }
+
+            reviews.forEach(review => {
+                let reviewDiv = document.createElement("div");
+                reviewDiv.classList.add("review-card");
+
+                reviewDiv.innerHTML = ` 
+                    <h3 class="user-name">${review.user_name || 'Anonymous'}</h3>
+                    <div class="stars">${'★'.repeat(review.rating) || 'No rating'}</div>
+                    <p class="thoughts">${review.thoughts || 'No comment provided'}</p>
+                    <p class="timestamp">${new Date(review.created_at).toLocaleString() || 'No timestamp available'}</p>
+                `;
+
+                reviewContainer.appendChild(reviewDiv);
+            });
+        }
+
+        function updateReviewCount(count) {
+            const reviewsCountElement = document.getElementById("reviewsCount");
+            reviewsCountElement.textContent = `${count} Review${count !== 1 ? 's' : ''}`;
+        }
+
+        function displayAverageRating(reviews) {
+            let totalRating = 0;
+            reviews.forEach(review => {
+                totalRating += review.rating;
+            });
+
+            const averageRating = totalRating / reviews.length;
+            const stars = '★'.repeat(Math.round(averageRating)); // Create a star rating based on the average
+            document.getElementById("averageRating").textContent = stars; // Only display stars
+            document.getElementById("numericRating").textContent = averageRating.toFixed(1); // Display numeric average rating
+        }
+    </script>
+</body>
+</html>
