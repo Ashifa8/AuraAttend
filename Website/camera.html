@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Face Recognition Attendance System</title>
+
+    <!-- External Styles -->
+    <link rel="stylesheet" href="camera.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
+
+    <!-- ✅ Luckysheet styles (latest) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/plugins/css/plugins.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/css/luckysheet.css" />
+
+    <style>
+        .attendance-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            height: auto;
+            min-height: 50vh;
+            padding-bottom: 20px;
+        }
+
+        .attendance-footer {
+            width: 100%;
+            background-color: #1406d4;
+            text-align: center;
+            padding: 10px;
+            margin-top: 140px;
+        }
+
+        .footer-link {
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .footer-link:hover {
+            text-decoration: underline;
+        }
+
+        .excel-controls {
+            margin-top: 10px;
+            text-align: right;
+            padding-right: 10px;
+        }
+
+        #createExcelBtn {
+            font-size: 24px;
+            color: white;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+        }
+
+        #createExcelBtn:hover {
+            color: #00ffcc;
+        }
+
+        #excelContainer {
+            margin-top: 10px;
+            border: 2px solid #ddd;
+            background-color: white;
+            border-radius: 10px;
+            overflow-x: auto;
+            size: 900px;
+        }
+
+        #fullScreenExcel {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: white;
+            z-index: 1000;
+            transition: all 0.3s ease-in-out;
+        }
+
+        #luckysheet {
+            margin: 0;
+            padding: 0;
+            position: absolute;
+            width: 100%;
+            height: 90%;
+            left: 0px;
+            top: 0px;
+        }
+
+        /* Adjust button styling */
+        button.close-button, button#saveSheetBtn {
+            position: absolute;
+            z-index: 9999;
+            padding: 6px 12px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .close-button {
+            top: 10px;
+            right: 145px;
+            background-color: red;
+            color: white;
+            z-index: 10001;
+        }
+
+        #saveSheetBtn {
+            top: 10px;
+            right: 20px;
+            background-color: #00b894;
+            color: white;
+            z-index: 10000;
+        }
+
+        .sheet-btn-container {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 12px; /* Reduced the gap between buttons */
+    margin: 12px 0;
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+}
+
+/* Excel file name button */
+.sheet-button {
+    background-color: #4CAF50;
+    color: white;
+    font-size: 16px; /* Slightly smaller font size */
+    padding: 10px 20px; /* Reduced padding for less width */
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease;
+    max-width: 250px; /* Limit max width */
+    white-space: nowrap; /* Prevent text from wrapping */
+    overflow: hidden; /* Prevent text overflow */
+    text-overflow: ellipsis; /* Show '...' for overflowing text */
+}
+
+.sheet-button:hover {
+    background-color: #388e3c;
+}
+
+/* Adjust delete button to match the smaller size */
+.delete-button {
+    font-size: 14px; /* Smaller font size */
+    padding: 8px 16px; /* Reduced padding */
+    border-radius: 6px;
+}
+
+
+.delete-button:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+
+.delete-button:focus {
+    outline: none;
+}
+
+
+        .delete-button-container {
+            display: flex;
+            align-items: center;
+        }
+    </style>
+</head>
+<body onload="checkLoginStatus()">
+
+    <!-- Top Bar -->
+    <div class="top-bar" style="background-color: rgb(20, 6, 212); color: white; height: 70px; display: flex; align-items: center; padding: 0 20px;">
+        <div class="left-section" style="display: flex; align-items: center;">
+            <i class="fa fa-user-circle" style="font-size: 30px; margin-right: 10px;"></i>
+            <span id="welcomeMessage" style="font-size: 18px;">Welcome</span>
+        </div>
+        <button class="logout-button" onclick="logout()" style="margin-left: auto; margin-right: 40px; padding: 8px 15px; font-size: 16px;">Logout</button>
+    </div>
+
+    <div class="container" style="height: 100vh; overflow: hidden;">
+        <div class="camera-section">
+            <button id="cameraButton" class="camera-button">
+                <img src="camera.png" alt="Camera Icon" class="icon">
+                <h4>Click to capture</h4>
+            </button>
+            <div id="cameraFeed" class="camera-feed" style="display: none;">
+                <video id="video" width="100%" autoplay></video>
+                <button id="captureButton">Capture</button>
+            </div>
+        </div>
+
+        <div class="attendance-section">
+            <h2 style="color: rgb(240, 241, 255);">Attendance Records</h2>
+
+            <div id="excelContainer" style="font-size:x-large;"></div>
+            <div class="excel-controls">
+                <button id="createExcelBtn" title="Create Excel Sheet">➕</button>
+            </div>
+            <footer class="attendance-footer">
+                <a href="folders.html" class="footer-link">Pictures</a>
+            </footer>
+        </div>
+    </div>
+    
+
+    <!-- Fullscreen Luckysheet -->
+    <div id="fullScreenExcel">
+        <div id="luckysheet"></div>
+        <button class="close-button" onclick="closeExcel()">Close</button>
+        <button id="saveSheetBtn" onclick="saveSheet()">Update Sheet</button>
+    </div>
+    
+    
+
+    <!-- ✅ Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/plugins/js/plugin.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/luckysheet.umd.js"></script>
+    <script src="camera.js"></script>
+
+</body>
+</html>
