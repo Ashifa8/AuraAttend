@@ -30,6 +30,231 @@ def get_db_connection():
         password="",
         database="user_database"
     )
+# Load MTCNN for face detection
+mtcnn = MTCNN(keep_all=True)
+
+# Load the feature extractor (InceptionResnetV1)
+feature_extractor = InceptionResnetV1(pretrained='vggface2').eval()
+
+# Path to embeddings CSV file
+STORED_EMBEDDINGS_PATH = "cleaned_face_embeddings.csv"
+
+# Initialize lists
+stored_embeddings = []
+names_list = []
+class_list = []
+
+# Load stored embeddings and names from the CSV file
+if os.path.exists(STORED_EMBEDDINGS_PATH):
+    df = pd.read_csv(STORED_EMBEDDINGS_PATH)
+    names_list = df['Person'].tolist()
+    class_list = df['Class'].tolist()
+    stored_embeddings = df.iloc[:, 2:].astype(np.float32).values.tolist()
+
+# Cosine similarity function
+def cosine_similarity(embedding1, embedding2):
+    dot_product = np.dot(embedding1, embedding2)
+    norm1 = np.linalg.norm(embedding1)
+    norm2 = np.linalg.norm(embedding2)
+    return dot_product / (norm1 * norm2)
+
+# Recognition route
+@app.route('/recognize-face', methods=['POST'])
+def recognize_face():
+    try:
+        data = request.get_json()
+        image_data = data.get('image')
+
+        if not image_data:
+            return jsonify({"status": "error", "message": "No image data received."})
+
+        image_bytes = base64.b64decode(image_data)
+        nparr = np.frombuffer(image_bytes, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+        if img is None:
+            return jsonify({"status": "error", "message": "Error decoding the image."})
+
+        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        faces, _ = mtcnn.detect(img_rgb)
+
+        if faces is None or len(faces) == 0:
+            return jsonify({"status": "error", "message": "No face detected."})
+
+        results = []
+
+        similarity_threshold = 0.5 # 🔄 UPDATED THRESHOLD
+
+        for (x1, y1, x2, y2) in faces:
+            face = img[int(y1):int(y2), int(x1):int(x2)]
+            face_resized = cv2.resize(face, (160, 160))
+            face_normalized = face_resized / 255.0
+            face_tensor = torch.tensor(face_normalized).permute(2, 0, 1).unsqueeze(0).float()
+
+            embedding = feature_extractor(face_tensor).detach().numpy().flatten()
+
+            if embedding.shape[0] == 513:
+                embedding = embedding[:512]
+            elif embedding.shape[0] != 512:
+                return jsonify({"status": "error", "message": "Invalid embedding shape."})
+
+            embedding = embedding / np.linalg.norm(embedding)
+
+            best_similarity = -1
+            recognized_name = "Unknown"
+            recognized_class = "Unknown"
+
+            for stored_embedding, name, class_name in zip(stored_embeddings, names_list, class_list):
+                similarity = cosine_similarity(embedding, stored_embedding)
+                if similarity > best_similarity:
+                    best_similarity = similarity
+                    recognized_name = name
+                    recognized_class = class_name
+
+            if best_similarity < similarity_threshold:
+                recognized_name = "Unknown"
+                recognized_class = "Unknown"
+
+            results.append({
+                "name": recognized_name,
+                "class": recognized_class,
+                "similarity": float(best_similarity),
+                "threshold": similarity_threshold
+            })
+
+        return jsonify({"status": "success", "results": results})
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"status": "error", "message": f"Error: {str(e)}"})
+    
+
+@app.route('/mark_attendance', methods=['POST'])
+def mark_attendance():
+    try:
+        data = request.get_json()
+        name = data.get('name')
+        class_name = data.get('class')
+        date_str = datetime.now().strftime("%Y-%m-%d")
+
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'message': 'User not logged in'})
+
+        if not name or not class_name:
+            return jsonify({'success': False, 'message': 'Missing name or class'})
+
+        # ✅ Query Excel file path from database using user_id and file_name (class_name)
+        conn = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="",
+            database="user_database"
+        )
+        cursor = conn.cursor()
+        cursor.execute("SELECT file_path FROM excel_files WHERE user_id = %s AND file_name LIKE %s", 
+                       (user_id, f"%{class_name}%"))
+        result = cursor.fetchone()
+        conn.close()
+
+        if not result:
+            return jsonify({'success': False, 'message': f"No Excel file found for class '{class_name}'"})
+
+        matching_file = result[0]  # Full path like 'excel_sheets/BSSE_SS1_8th.xlsx'
+        print(f"📂 Found Excel file: {matching_file}")
+
+        df = pd.read_excel(matching_file, engine='openpyxl')
+
+        if 'Name' not in df.columns:
+            return jsonify({'success': False, 'message': "Excel must contain a 'Name' column."})
+
+        # Add date column if not present
+        if date_str not in df.columns:
+            df[date_str] = ""
+
+        if name in df['Name'].values:
+            df.loc[df['Name'] == name, date_str] = "P"
+        else:
+            new_row = {col: "" for col in df.columns}
+            new_row['Name'] = name
+            new_row[date_str] = "P"
+            df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+
+        df.to_excel(matching_file, index=False, engine='openpyxl')
+        return jsonify({'success': True, 'message': f"Attendance marked for {name} in '{class_name}'."})
+
+    except Exception as e:
+        return jsonify({'success': False, 'message': f"Error updating Excel: {str(e)}"})
+
+
+@app.route('/get_class_name_for_recognized_face', methods=['POST', 'OPTIONS'])
+def get_class_name_for_recognized_face():
+    # Handle OPTIONS request (pre-flight CORS request)
+    if request.method == 'OPTIONS':
+        return '', 200  # Respond with a 200 OK to pre-flight requests
+
+    try:
+        data = request.get_json()
+        name = data.get('name')
+
+        if not name:
+            return jsonify({"success": False, "message": "Name is required"})
+
+        # Path to your cleaned embeddings CSV (adjust path if necessary)
+        embeddings_file_path = 'cleaned_face_embeddings.csv'
+
+        # Check if the file exists
+        if not os.path.exists(embeddings_file_path):
+            return jsonify({"success": False, "message": f"Embeddings file '{embeddings_file_path}' not found."})
+
+        # Read the CSV into a pandas DataFrame
+        df = pd.read_csv(embeddings_file_path)
+
+        # Strip any extra spaces from column names (if any)
+        df.columns = df.columns.str.strip()
+
+        # Check if 'Class' and 'Person' columns exist (with capital 'C' and 'P')
+        if 'Class' not in df.columns or 'Person' not in df.columns:
+            raise ValueError("CSV must contain 'Class' and 'Person' columns.")
+
+        # Find the row where the 'Person' matches the recognized name
+        matched_row = df[df['Person'] == name]
+
+        if matched_row.empty:
+            return jsonify({"success": False, "message": "Name not found in the CSV."})
+
+        # Extract the class name from the matched row
+        class_name = matched_row.iloc[0]['Class']
+
+        return jsonify({"success": True, "className": class_name})
+
+    except ValueError as ve:
+        # Handle specific errors like missing columns in CSV
+        return jsonify({"success": False, "message": str(ve)})
+
+    except Exception as e:
+        # General error handling
+        print(f"❌ Error in get_class_name_for_recognized_face: {str(e)}")
+        return jsonify({"success": False, "message": f"An error occurred: {str(e)}"})
+
+@app.route('/get_user_id', methods=['GET'])
+def get_user_id():
+    user_id = session.get('user_id')
+    username = session.get('username')
+    if user_id:
+        return jsonify({"status": "success", "user_id": user_id, "username": username})
+    else:
+        return jsonify({"status": "error", "message": "User not logged in"}), 401
+@app.route('/get_session_data', methods=['GET'])
+def get_session_data():
+    return jsonify({
+        "class": session.get('current_class'),
+        "excel_path": session.get('excel_path'),
+        "user_id": session.get('user_id'),
+        "username": session.get('username')
+    })
+
+
 @app.route("/create_excel", methods=["POST"])
 def create_excel():
     data = request.get_json()
