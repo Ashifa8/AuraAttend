@@ -41,13 +41,13 @@ body {
     padding: 20px;
 }
 
-/* Search wrapper styling */
 .search-wrapper {
     position: relative;
     width: 100%;
     margin-bottom: 20px;
     padding-top: 10px; /* Reduced from 60px to bring everything upward */
 }
+
 
 /* Guidance icon */
 .guidance-icon {
@@ -80,15 +80,17 @@ body {
     outline: none;
 }
 
+
 .search-icon {
-    position: absolute;
-    right: 12px;
-    top: calc(100% - 15px);
-    transform: translateY(-50%);
+    position: fixed;
+    right:26px;  /* Fixed right position */
+    top: 21%; /* Vertically center the icon */
+    transform: translateY(-50%); /* Fine-tune vertical alignment */
     cursor: pointer;
     font-size: 16px;
     color: #2f3a81;
 }
+
 
 #fileList {
     list-style-type: none;
@@ -234,3 +236,19 @@ body {
 .submit-btn:hover {
     background: linear-gradient(90deg, #6f73ff, #4a4df8);
 }
+.close-icon {
+    position: fixed;
+    top: 5px;
+    right: 25px;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #ffffff;
+    z-index: 1000;
+    transition: color 0.3s ease;
+  }
+  
+  .close-icon:hover {
+    color: red;
+  }
+  
